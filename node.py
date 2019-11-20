@@ -12,7 +12,6 @@ import logging
 
 from log import Log
 
-
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
@@ -140,7 +139,6 @@ class Node(object):
             self.send(response, self.peers[data['src_id']])
             return
 
-
         self.leader_id = data['leader_id']
 
         # heartbeat
@@ -150,7 +148,7 @@ class Node(object):
 
         prev_log_index = data['prev_log_index']
         prev_log_term = data['prev_log_term']
-        
+
         tmp_prev_log_term = self.log.get_log_term(prev_log_index)
 
         # append_entries: rule 2, 3
@@ -215,7 +213,7 @@ class Node(object):
         if self.voted_for == None or self.voted_for == candidate_id:
             if last_log_index >= self.log.last_log_index and last_log_term >= self.log.last_log_term:
                 self.vote_for = data['src_id']
-                self.save() 
+                self.save()
                 response['vote_granted'] = True
                 self.send(response, self.peers[data['src_id']])
                 logging.info('          3. success = True: candidate log is newer')
@@ -241,7 +239,6 @@ class Node(object):
         '''
 
         logging.info('-------------------------------all------------------------------------------')
-        
 
         if self.commit_index > self.last_applied:
             self.last_applied = self.commit_index
@@ -304,7 +301,7 @@ class Node(object):
         rules for fervers: candidate
         '''
         logging.info('-------------------------------candidate------------------------------------')
-        
+
         t = time.time()
         # candidate rules: rule 1
         for dst_id in self.peers:
@@ -336,7 +333,7 @@ class Node(object):
                 self.vote_ids[data['src_id']] = data['vote_granted']
                 vote_count = sum(list(self.vote_ids.values()))
 
-                if vote_count >= len(self.peers)//2:
+                if vote_count >= len(self.peers) // 2:
                     logging.info('           2. become leader')
                     self.role = 'leader'
                     self.next_heartbeat_time = 0
@@ -416,7 +413,9 @@ class Node(object):
                     self.match_index[data['src_id']] = self.next_index[data['src_id']]
                     self.next_index[data['src_id']] = self.log.last_log_index + 1
                     logging.info('        2. success = True')
-                    logging.info('        3. match_index = ' + str(self.match_index[data['src_id']]) +  ' next_index = ' + str(self.next_index[data['src_id']]))
+                    logging.info(
+                        '        3. match_index = ' + str(self.match_index[data['src_id']]) + ' next_index = ' + str(
+                            self.next_index[data['src_id']]))
 
         # leader rules: rule 4
         while True:
@@ -426,19 +425,18 @@ class Node(object):
             for _id in self.match_index:
                 if self.match_index[_id] >= N:
                     count += 1
-                if count >= len(self.peers)//2:
+                if count >= len(self.peers) // 2:
                     self.commit_index = N
                     logging.info('leader：1. commit + 1')
 
                     if self.client_addr:
                         response = {'index': self.commit_index}
-                        self.send(response, (self.client_addr[0],10000))
+                        self.send(response, (self.client_addr[0], 10000))
 
                     break
             else:
                 logging.info('leader：2. commit = ' + str(self.commit_index))
                 break
-
 
     def run(self):
         while True:
